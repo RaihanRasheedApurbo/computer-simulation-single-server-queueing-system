@@ -4,7 +4,7 @@ import math
 from enum import IntEnum, Enum
 import csv
 
-logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().setLevel(logging.INFO)
 
 
 class Server_Status(IntEnum):
@@ -244,7 +244,7 @@ def part_b():
     mean_service_time = float(numbers[1])  # this is not needed for part_b
     number_of_total_customers = int(numbers[2])
     input_file.close()
-
+    
     csv_file = open("report.csv", "wt")
     csv_writer = csv.writer(csv_file)
     header = [
@@ -262,9 +262,9 @@ def part_b():
         state, counter, _ = simulate(
             mean_arrival_time, k * mean_arrival_time, number_of_total_customers
         )
-        logging.warning(f"iteration : {k}")
-        logging.warning(f"state after completion: {state}")
-        logging.warning(f"counter values after completion: {counter}")
+        logging.info(f"iteration : {k}")
+        logging.info(f"state after completion: {state}")
+        logging.info(f"counter values after completion: {counter}")
 
         average_delay = (
             counter["total_of_delays"] / counter["number_of_customer_delayed"]
@@ -299,7 +299,92 @@ def part_c():
     arrival_time_random_numbers = random_number_lists["arrival_time_random_numbers"]
     service_time_random_numbers = random_number_lists["service_time_random_numbers"]
 
-    print(len(uniform_random_numbers), len(arrival_time_random_numbers), len(service_time_random_numbers))
+    logging.info(f"{len(uniform_random_numbers)} {len(arrival_time_random_numbers)}, {len(service_time_random_numbers)}")
+
+    # uniform random variable p(x) f(x) calculation
+    bucket_length = 10
+    uniform_bucket = [0] * bucket_length
+    for i in range(bucket_length):
+        uniform_bucket[i] = ((i+1)/bucket_length) # creating bucket ranging from 0-.1, .1-.2 and so on....
+    data_frequency = [0] * bucket_length
+
+    for data in uniform_random_numbers:
+        for i in range(bucket_length):
+            if data <= uniform_bucket[i]:
+                data_frequency[i] += 1
+                break
+    logging.info(uniform_bucket)
+    logging.info(data_frequency)
+
+    p_x = [0] * bucket_length
+    for i in range(bucket_length):
+        p_x[i] = data_frequency[i] / len(uniform_random_numbers)
+    logging.info(f"uniform p(x): {p_x}")
+    
+    f_x = [0] * bucket_length
+    f_x[0] = p_x[0]
+    for i in range(1,bucket_length):
+        f_x[i] = f_x[i-1] + p_x[i]
+    logging.info(f"uniform f(x): {f_x}")
+
+    # p(x) and f(x) calculation for arrival time
+    bucket_length = 4
+    exponential_arrival_bucket = [mean_arrival_time/2, mean_arrival_time, 2*mean_arrival_time, 3*mean_arrival_time]
+    data_frequency = [0] * bucket_length
+
+    for data in arrival_time_random_numbers:
+        for i in range(bucket_length):
+            if data <= exponential_arrival_bucket[i]:
+                data_frequency[i] += 1
+                break
+    
+    logging.info(exponential_arrival_bucket)
+    logging.info(data_frequency)
+
+    p_x = [0] * bucket_length
+    for i in range(bucket_length):
+        p_x[i] = data_frequency[i] / len(arrival_time_random_numbers)
+    logging.info(f"exponential arrival p(x): {p_x}")
+    
+    f_x = [0] * bucket_length
+    f_x[0] = p_x[0]
+    for i in range(1,bucket_length):
+        f_x[i] = f_x[i-1] + p_x[i]
+    logging.info(f"exponential arrival f(x): {f_x}")
+
+    # p(x) and f(x) calculation for service time
+    bucket_length = 4
+    exponential_service_bucket = [mean_service_time/2, mean_service_time, 2*mean_service_time, 3*mean_service_time]
+    data_frequency = [0] * bucket_length
+
+    for data in service_time_random_numbers:
+        for i in range(bucket_length):
+            if data <= exponential_service_bucket[i]:
+                data_frequency[i] += 1
+                break
+    
+    logging.info(exponential_service_bucket)
+    logging.info(data_frequency)
+
+    p_x = [0] * bucket_length
+    for i in range(bucket_length):
+        p_x[i] = data_frequency[i] / len(service_time_random_numbers)
+    logging.info(f"exponential service p(x): {p_x}")
+    
+    f_x = [0] * bucket_length
+    f_x[0] = p_x[0]
+    for i in range(1,bucket_length):
+        f_x[i] = f_x[i-1] + p_x[i]
+    logging.info(f"exponential service f(x): {f_x}")
+
+    
+
+
+
+
+    
+
+
 
 
 part_c()
