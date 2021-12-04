@@ -131,7 +131,7 @@ def report(state, counter, output_file):
     logging.info(f"counter values after completion: {counter}")
 
     average_delay = counter["total_of_delays"] / counter["number_of_customer_delayed"]
-    output_file.write(f"\n\nAverage delay in queue {average_delay}\n\n")
+    output_file.write(f"\n\nAverage delay in queue {average_delay} minute\n\n")
 
     average_length = counter["area_number_in_queue"] / state["sim_time"]
     output_file.write(f"Average number in queue {average_length}\n\n")
@@ -139,7 +139,7 @@ def report(state, counter, output_file):
     server_utilization = counter["area_server_status"] / state["sim_time"]
     output_file.write(f"Server utilization {server_utilization}\n\n")
 
-    output_file.write(f"Time simulation ended {state['sim_time']}")
+    output_file.write(f"Time simulation ended {state['sim_time']} minute")
 
 
 def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
@@ -345,12 +345,14 @@ def part_c():
     for i in range(bucket_length):
         p_x[i] = data_frequency[i] / len(uniform_random_numbers)
     logging.info(f"uniform p(x): {p_x}")
+    logging.info(f"median {np.median(p_x)}, max {np.max(p_x)}, min {np.min(p_x)}")
 
     f_x = [0] * bucket_length
     f_x[0] = p_x[0]
     for i in range(1, bucket_length):
         f_x[i] = f_x[i - 1] + p_x[i]
     logging.info(f"uniform f(x): {f_x}")
+    logging.info(f"median {np.median(f_x)}, max {np.max(f_x)}, min {np.min(f_x)}")
 
     xpoints = uniform_bucket
 
@@ -387,12 +389,15 @@ def part_c():
     for i in range(bucket_length):
         p_x[i] = data_frequency[i] / len(arrival_time_random_numbers)
     logging.info(f"exponential arrival p(x): {p_x}")
+    logging.info(f"median {np.median(p_x)}, max {np.max(p_x)}, min {np.min(p_x)}")
 
     f_x = [0] * bucket_length
     f_x[0] = p_x[0]
     for i in range(1, bucket_length):
         f_x[i] = f_x[i - 1] + p_x[i]
     logging.info(f"exponential arrival f(x): {f_x}")
+    logging.info(f"median {np.median(f_x)}, max {np.max(f_x)}, min {np.min(f_x)}")
+
 
     xpoints = exponential_arrival_bucket
 
@@ -427,12 +432,14 @@ def part_c():
     for i in range(bucket_length):
         p_x[i] = data_frequency[i] / len(service_time_random_numbers)
     logging.info(f"exponential service p(x): {p_x}")
+    logging.info(f"median {np.median(p_x)}, max {np.max(p_x)}, min {np.min(p_x)}")
 
     f_x = [0] * bucket_length
     f_x[0] = p_x[0]
     for i in range(1, bucket_length):
         f_x[i] = f_x[i - 1] + p_x[i]
     logging.info(f"exponential service f(x): {f_x}")
+    logging.info(f"median {np.median(f_x)}, max {np.max(f_x)}, min {np.min(f_x)}")
 
     xpoints = exponential_service_bucket
 
