@@ -6,7 +6,7 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-# logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 
 
 class Server_Status(IntEnum):
@@ -440,7 +440,7 @@ def part_c():
 
     plt.plot(xpoints, f_x, label="f(x)")
     plt.legend()
-    plt.title("Exponential Arrival Time Random Variable Distribution Analysis")
+    plt.title("Exponential service Time Random Variable Distribution Analysis")
     plt.savefig("exponential_service.jpg")
     plt.figure()
 
