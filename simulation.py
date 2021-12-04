@@ -1,7 +1,7 @@
 import logging
 import random
 import math
-from enum import IntEnum
+from enum import IntEnum, Enum
 import csv
 
 logging.getLogger().setLevel(logging.WARNING)
@@ -11,11 +11,21 @@ class Server_Status(IntEnum):
     BUSY = 1
     IDLE = 0
 
+class Random_Number_type(Enum):
+    ARRIVAL_TIME = 1
+    SERVICE_TIME = 2
 
-def expexponential_random_variable(mean):
+
+def expexponential_random_variable(mean, lists, type):
     uniform_random_vairable = random.uniform(0, 1)
+    lists["uniform_random_numbers"].append(uniform_random_vairable)
     ln_uniform_random_variable = math.log(uniform_random_vairable)
-    return -1 * mean * ln_uniform_random_variable
+    return_value = -1 * mean * ln_uniform_random_variable
+    if type == Random_Number_type.ARRIVAL_TIME:
+        lists["arrival_time_random_numbers"].append(return_value)
+    elif type == Random_Number_type.SERVICE_TIME:
+        lists["service_time_random_numbers"].append(return_value)
+    return return_value
 
 
 def timing(state, time_next_event, output_file):
@@ -56,10 +66,11 @@ def arrive(
     mean_arrival_time,
     number_of_total_customers,
     output_file,
+    random_number_lists
 ):
     # some one arriving so we have to schedule new arrival time for next person
     time_next_event[1] = state["sim_time"] + expexponential_random_variable(
-        mean_arrival_time
+        mean_arrival_time, random_number_lists, Random_Number_type.ARRIVAL_TIME
     )
 
     if state["server_status"] == Server_Status.BUSY:
@@ -78,11 +89,11 @@ def arrive(
         state["server_status"] = Server_Status.BUSY
         # scheduling departure time for this customer
         time_next_event[2] = state["sim_time"] + expexponential_random_variable(
-            mean_service_time
+            mean_service_time, random_number_lists, Random_Number_type.SERVICE_TIME
         )
 
 
-def depart(state, counter, time_next_event, arrival_time_list, mean_service_time):
+def depart(state, counter, time_next_event, arrival_time_list, mean_service_time, random_number_lists):
     # if queue is empty make the status IDLE and set departure to infinity
     if state["number_of_people_in_queue"] == 0:
         state["server_status"] = Server_Status.IDLE
@@ -97,7 +108,7 @@ def depart(state, counter, time_next_event, arrival_time_list, mean_service_time
 
         # calculate departure time for this new customer
         time_next_event[2] = state["sim_time"] + expexponential_random_variable(
-            mean_service_time
+            mean_service_time, random_number_lists, Random_Number_type.SERVICE_TIME
         )
 
         # shift the queue one step left
@@ -153,7 +164,14 @@ def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
         "number_of_customer_delayed": 0,
         "total_of_delays": 0.0,
         "area_number_in_queue": 0.0,
-        "area_server_status": 0.0,
+        "area_server_status": 0.0,   
+    }
+
+    # initializing random number lists for part_c
+    random_number_lists = {
+        "uniform_random_numbers": [],
+        "arrival_time_random_numbers": [],
+        "service_time_random_numbers": []
     }
 
     logging.info(f"initialized counter variables {counter}")
@@ -165,7 +183,7 @@ def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
     time_next_event.append(None)
     # next interarrival time is in 1th index
     time_next_event.append(
-        state["sim_time"] + expexponential_random_variable(mean_arrival_time)
+        state["sim_time"] + expexponential_random_variable(mean_arrival_time, random_number_lists, Random_Number_type.ARRIVAL_TIME)
     )
     # next service time is in 2nd index
     time_next_event.append(float("inf"))
@@ -191,16 +209,17 @@ def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
                 mean_arrival_time,
                 number_of_total_customers,
                 output_file,
+                random_number_lists
             )
         elif state["next_event_type"] == 2:
             depart(
-                state, counter, time_next_event, arrival_time_list, mean_service_time
+                state, counter, time_next_event, arrival_time_list, mean_service_time, random_number_lists
             )
 
     report(state, counter, output_file)
     output_file.close()
 
-    return state, counter
+    return state, counter, random_number_lists
 
 
 def part_a():
@@ -240,7 +259,7 @@ def part_b():
     k_values = [0.5, 0.6, 0.7, 0.8, 0.9]
 
     for k in k_values:
-        state, counter = simulate(
+        state, counter, _ = simulate(
             mean_arrival_time, k * mean_arrival_time, number_of_total_customers
         )
         logging.warning(f"iteration : {k}")
@@ -264,5 +283,23 @@ def part_b():
 
     csv_file.close()
 
+def part_c():
+    input_file = open("input.txt", "rt")  # r-> read t-> text mode
 
-part_b()
+    input_line = input_file.readline()
+    numbers = input_line.split()
+    mean_arrival_time = float(numbers[0])
+    mean_service_time = float(numbers[1])
+    number_of_total_customers = int(numbers[2])
+    input_file.close()
+
+    state, counter, random_number_lists = simulate(mean_arrival_time, mean_service_time, number_of_total_customers)
+
+    uniform_random_numbers = random_number_lists["uniform_random_numbers"]
+    arrival_time_random_numbers = random_number_lists["arrival_time_random_numbers"]
+    service_time_random_numbers = random_number_lists["service_time_random_numbers"]
+
+    print(len(uniform_random_numbers), len(arrival_time_random_numbers), len(service_time_random_numbers))
+
+
+part_c()
