@@ -3,13 +3,16 @@ import random
 import math
 from enum import IntEnum, Enum
 import csv
+import matplotlib.pyplot as plt
+import numpy as np
 
-logging.getLogger().setLevel(logging.INFO)
+# logging.getLogger().setLevel(logging.INFO)
 
 
 class Server_Status(IntEnum):
     BUSY = 1
     IDLE = 0
+
 
 class Random_Number_type(Enum):
     ARRIVAL_TIME = 1
@@ -66,7 +69,7 @@ def arrive(
     mean_arrival_time,
     number_of_total_customers,
     output_file,
-    random_number_lists
+    random_number_lists,
 ):
     # some one arriving so we have to schedule new arrival time for next person
     time_next_event[1] = state["sim_time"] + expexponential_random_variable(
@@ -93,7 +96,14 @@ def arrive(
         )
 
 
-def depart(state, counter, time_next_event, arrival_time_list, mean_service_time, random_number_lists):
+def depart(
+    state,
+    counter,
+    time_next_event,
+    arrival_time_list,
+    mean_service_time,
+    random_number_lists,
+):
     # if queue is empty make the status IDLE and set departure to infinity
     if state["number_of_people_in_queue"] == 0:
         state["server_status"] = Server_Status.IDLE
@@ -164,14 +174,14 @@ def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
         "number_of_customer_delayed": 0,
         "total_of_delays": 0.0,
         "area_number_in_queue": 0.0,
-        "area_server_status": 0.0,   
+        "area_server_status": 0.0,
     }
 
     # initializing random number lists for part_c
     random_number_lists = {
         "uniform_random_numbers": [],
         "arrival_time_random_numbers": [],
-        "service_time_random_numbers": []
+        "service_time_random_numbers": [],
     }
 
     logging.info(f"initialized counter variables {counter}")
@@ -183,7 +193,10 @@ def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
     time_next_event.append(None)
     # next interarrival time is in 1th index
     time_next_event.append(
-        state["sim_time"] + expexponential_random_variable(mean_arrival_time, random_number_lists, Random_Number_type.ARRIVAL_TIME)
+        state["sim_time"]
+        + expexponential_random_variable(
+            mean_arrival_time, random_number_lists, Random_Number_type.ARRIVAL_TIME
+        )
     )
     # next service time is in 2nd index
     time_next_event.append(float("inf"))
@@ -209,11 +222,16 @@ def simulate(mean_arrival_time, mean_service_time, number_of_total_customers):
                 mean_arrival_time,
                 number_of_total_customers,
                 output_file,
-                random_number_lists
+                random_number_lists,
             )
         elif state["next_event_type"] == 2:
             depart(
-                state, counter, time_next_event, arrival_time_list, mean_service_time, random_number_lists
+                state,
+                counter,
+                time_next_event,
+                arrival_time_list,
+                mean_service_time,
+                random_number_lists,
             )
 
     report(state, counter, output_file)
@@ -244,7 +262,7 @@ def part_b():
     mean_service_time = float(numbers[1])  # this is not needed for part_b
     number_of_total_customers = int(numbers[2])
     input_file.close()
-    
+
     csv_file = open("report.csv", "wt")
     csv_writer = csv.writer(csv_file)
     header = [
@@ -283,6 +301,7 @@ def part_b():
 
     csv_file.close()
 
+
 def part_c():
     input_file = open("input.txt", "rt")  # r-> read t-> text mode
 
@@ -293,19 +312,25 @@ def part_c():
     number_of_total_customers = int(numbers[2])
     input_file.close()
 
-    state, counter, random_number_lists = simulate(mean_arrival_time, mean_service_time, number_of_total_customers)
+    state, counter, random_number_lists = simulate(
+        mean_arrival_time, mean_service_time, number_of_total_customers
+    )
 
     uniform_random_numbers = random_number_lists["uniform_random_numbers"]
     arrival_time_random_numbers = random_number_lists["arrival_time_random_numbers"]
     service_time_random_numbers = random_number_lists["service_time_random_numbers"]
 
-    logging.info(f"{len(uniform_random_numbers)} {len(arrival_time_random_numbers)}, {len(service_time_random_numbers)}")
+    logging.info(
+        f"{len(uniform_random_numbers)} {len(arrival_time_random_numbers)}, {len(service_time_random_numbers)}"
+    )
 
     # uniform random variable p(x) f(x) calculation
     bucket_length = 10
     uniform_bucket = [0] * bucket_length
     for i in range(bucket_length):
-        uniform_bucket[i] = ((i+1)/bucket_length) # creating bucket ranging from 0-.1, .1-.2 and so on....
+        uniform_bucket[i] = (
+            i + 1
+        ) / bucket_length  # creating bucket ranging from 0-.1, .1-.2 and so on....
     data_frequency = [0] * bucket_length
 
     for data in uniform_random_numbers:
@@ -320,16 +345,33 @@ def part_c():
     for i in range(bucket_length):
         p_x[i] = data_frequency[i] / len(uniform_random_numbers)
     logging.info(f"uniform p(x): {p_x}")
-    
+
     f_x = [0] * bucket_length
     f_x[0] = p_x[0]
-    for i in range(1,bucket_length):
-        f_x[i] = f_x[i-1] + p_x[i]
+    for i in range(1, bucket_length):
+        f_x[i] = f_x[i - 1] + p_x[i]
     logging.info(f"uniform f(x): {f_x}")
+
+    xpoints = uniform_bucket
+
+    plt.plot(xpoints, p_x, label="p(x)")
+
+    plt.plot(xpoints, f_x, label="f(x)")
+    plt.legend()
+    plt.title("Uniform Random Variable Distribution Analysis")
+    plt.savefig("uniform.jpg")
+    plt.figure()
+
+    # plt.show()
 
     # p(x) and f(x) calculation for arrival time
     bucket_length = 4
-    exponential_arrival_bucket = [mean_arrival_time/2, mean_arrival_time, 2*mean_arrival_time, 3*mean_arrival_time]
+    exponential_arrival_bucket = [
+        mean_arrival_time / 2,
+        mean_arrival_time,
+        2 * mean_arrival_time,
+        3 * mean_arrival_time,
+    ]
     data_frequency = [0] * bucket_length
 
     for data in arrival_time_random_numbers:
@@ -337,7 +379,7 @@ def part_c():
             if data <= exponential_arrival_bucket[i]:
                 data_frequency[i] += 1
                 break
-    
+
     logging.info(exponential_arrival_bucket)
     logging.info(data_frequency)
 
@@ -345,16 +387,31 @@ def part_c():
     for i in range(bucket_length):
         p_x[i] = data_frequency[i] / len(arrival_time_random_numbers)
     logging.info(f"exponential arrival p(x): {p_x}")
-    
+
     f_x = [0] * bucket_length
     f_x[0] = p_x[0]
-    for i in range(1,bucket_length):
-        f_x[i] = f_x[i-1] + p_x[i]
+    for i in range(1, bucket_length):
+        f_x[i] = f_x[i - 1] + p_x[i]
     logging.info(f"exponential arrival f(x): {f_x}")
+
+    xpoints = exponential_arrival_bucket
+
+    plt.plot(xpoints, p_x, label="p(x)")
+
+    plt.plot(xpoints, f_x, label="f(x)")
+    plt.legend()
+    plt.title("Exponential Arrival Time Random Variable Distribution Analysis")
+    plt.savefig("exponential_arrival.jpg")
+    plt.figure()
 
     # p(x) and f(x) calculation for service time
     bucket_length = 4
-    exponential_service_bucket = [mean_service_time/2, mean_service_time, 2*mean_service_time, 3*mean_service_time]
+    exponential_service_bucket = [
+        mean_service_time / 2,
+        mean_service_time,
+        2 * mean_service_time,
+        3 * mean_service_time,
+    ]
     data_frequency = [0] * bucket_length
 
     for data in service_time_random_numbers:
@@ -362,7 +419,7 @@ def part_c():
             if data <= exponential_service_bucket[i]:
                 data_frequency[i] += 1
                 break
-    
+
     logging.info(exponential_service_bucket)
     logging.info(data_frequency)
 
@@ -370,21 +427,22 @@ def part_c():
     for i in range(bucket_length):
         p_x[i] = data_frequency[i] / len(service_time_random_numbers)
     logging.info(f"exponential service p(x): {p_x}")
-    
+
     f_x = [0] * bucket_length
     f_x[0] = p_x[0]
-    for i in range(1,bucket_length):
-        f_x[i] = f_x[i-1] + p_x[i]
+    for i in range(1, bucket_length):
+        f_x[i] = f_x[i - 1] + p_x[i]
     logging.info(f"exponential service f(x): {f_x}")
 
-    
+    xpoints = exponential_service_bucket
 
+    plt.plot(xpoints, p_x, label="p(x)")
 
-
-
-    
-
-
+    plt.plot(xpoints, f_x, label="f(x)")
+    plt.legend()
+    plt.title("Exponential Arrival Time Random Variable Distribution Analysis")
+    plt.savefig("exponential_service.jpg")
+    plt.figure()
 
 
 part_c()
